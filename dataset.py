@@ -1,13 +1,17 @@
 import torch 
 import torch.nn as nn
 import torch.utils.data 
-import Dataset 
+from torch.utils.data import Dataset
+from typing import Any
+
+
 
 class BilingualDataset(Dataset):
 
     def __init__(self, ds, tokenizer_src, tokenizer_tgt, src_lang, tgt_lang, seq_len ) -> None:
-        super().__init__
+        super().__init__()
 
+        self.seq_len = seq_len
         self.ds = ds
         self.tokenizer_src = tokenizer_src
         self.tokenizer_tgt = tokenizer_tgt
@@ -15,13 +19,13 @@ class BilingualDataset(Dataset):
         self.tgt_lang = tgt_lang
 
         #convert token into a number
-        self.sos_token = torch.Tensor([tokenizer_src.token_to_id(['SOS'])], dtype=torch.int64)
-        self.eos_token = torch.Tensor([tokenizer_src.token_to_id(['EOS'])], dtype=torch.int64)
-        self.pad_token = torch.Tensor([tokenizer_src.token_to_id(['PAD'])], dtype=torch.int64)
+        self.sos_token = torch.tensor([tokenizer_src.token_to_id("[SOS]")], dtype=torch.int64)
+        self.eos_token = torch.tensor([tokenizer_src.token_to_id("[EOS]")], dtype=torch.int64)
+        self.pad_token = torch.tensor([tokenizer_src.token_to_id("[PAD]")], dtype=torch.int64)
 
     #tells the length method of the dataset ie length of the dataset
     # then define the get method 
-    def __len(self):
+    def __len__(self):
         return len(self.ds)
 
     def __getitem__(self, index: Any) -> Any:
@@ -86,7 +90,7 @@ class BilingualDataset(Dataset):
             #we use unsqueeze twice to add sequence dimension and batch dimension
             "encoder_mask":(encoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int(), #(1,1, seq_len)
             #we need a special mask, a casual mask, it should only look backward, and not at special tokens
-            "decoder_mask":(decoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int(0) & casual_mask(decoder_input.size(0)), #(1,1,seq_len)
+            "decoder_mask":(decoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int() & casual_mask(decoder_input.size(0)), #(1,1,seq_len)
             "label" : label, #seqlen
             "src_txt" : src_text,
             "tgt_txt" : tgt_text
